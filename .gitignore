@@ -1,0 +1,14 @@
+data/
+**/*.pyc
+*.parquet
+*.sqlite
+*.db
+*.json
+*.yaml
+*.yml
+*.ini
+*.log
+*.txt
+*.md
+
+.DS_Store

@@ -17,6 +17,7 @@ from typing import Optional
 from msgspec import field
 
 from nautilus_trader.config import StrategyConfig
+from nautilus_trader.core.datetime import unix_nanos_to_dt
 from nautilus_trader.core.message import Event
 from nautilus_trader.model.data import Bar, BarType
 from nautilus_trader.model.enums import OrderSide, PositionSide
@@ -162,7 +163,7 @@ class Strategy1(Strategy):
         
         # Update pivot points
         self.pivot_points.update(
-            timestamp=bar.ts_init.as_datetime(),
+            timestamp=unix_nanos_to_dt(bar.ts_init),
             high=float(bar.high),
             low=float(bar.low),
             close=float(bar.close)
@@ -305,10 +306,12 @@ class Strategy1(Strategy):
         bar : Bar
             Current bar
         """
-        # Get current position
-        position = self.portfolio.position(self.instrument_id)
-        if position is None:
+        # Get current position using cache
+        positions = [p for p in self.cache.positions() if p.instrument_id == self.instrument_id and p.is_open]
+        if not positions:
             return
+        
+        position = positions[0]
         
         current_price = float(bar.close)
         entry_price = float(position.avg_px_open)
