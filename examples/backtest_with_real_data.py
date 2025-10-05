@@ -20,7 +20,7 @@ from nautilus_trader.model.enums import AccountType, OmsType
 from nautilus_trader.model.objects import Money
 
 from bot.bot1 import Strategy1, Strategy1Config
-from data.load_csv_data import load_tick_data_from_csv, convert_ticks_to_bars, create_eurusd_instrument
+from tools.load_csv_data import load_tick_data_from_csv, convert_ticks_to_bars, create_eurusd_instrument
 from nautilus_trader.model.enums import AggregationSource
 from nautilus_trader.model.data import BarType
 

@@ -137,7 +137,7 @@ def run_backtest():
     
     # Create instrument
     instrument = CryptoPerpetual(
-        id=instrument_id,
+        instrument_id=instrument_id,
         raw_symbol=symbol,
         base_currency=BTC,
         quote_currency=USD,

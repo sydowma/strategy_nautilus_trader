@@ -162,6 +162,7 @@ class Strategy1(Strategy):
             self.low_history = self.low_history[-max_history:]
         
         # Update pivot points
+        # for pivot points(15m) we can update for every day, no need every bar
         self.pivot_points.update(
             timestamp=unix_nanos_to_dt(bar.ts_init),
             high=float(bar.high),
