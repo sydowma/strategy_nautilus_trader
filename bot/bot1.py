@@ -6,8 +6,8 @@ Combines:
 - MACD (Moving Average Convergence Divergence) for momentum signals
 
 Strategy Logic:
-- Enter LONG when: uptrend (EMA), bullish MACD crossover, price near support
-- Enter SHORT when: downtrend (EMA), bearish MACD crossover, price near resistance
+- Enter LONG when: uptrend (EMA), bullish MACD crossover, price near Pivot Points PP
+- Enter SHORT when: downtrend (EMA), bearish MACD crossover, price near Pivot Points PP
 - Exit using stop loss and take profit based on pivot point levels
 """
 
@@ -58,8 +58,8 @@ class Strategy1Config(StrategyConfig, frozen=True):
     instrument_id: str
     bar_type: str
     ema_periods: list[int] = field(default_factory=lambda: [20, 50, 100, 200])
-    macd_fast_period: int = 12
-    macd_slow_period: int = 26
+    macd_fast_period: int = 13
+    macd_slow_period: int = 34
     macd_signal_period: int = 9
     risk_percent: float = 0.01
     stop_loss_atr_multiplier: float = 2.0
@@ -198,31 +198,29 @@ class Strategy1(Strategy):
         is_uptrend = self.ema_indicator.is_trend_up(self.price_history)
         
         # Check MACD signals
-        is_macd_bullish = self.macd_indicator.is_bullish_crossover(self.price_history)
-        is_macd_bearish = self.macd_indicator.is_bearish_crossover(self.price_history)
+        # is_macd_bullish = self.macd_indicator.is_bullish_crossover(self.price_history)
+        # is_macd_bearish = self.macd_indicator.is_bearish_crossover(self.price_history)
         
         # Get pivot points
         pivots = self.pivot_points.pivot_points
         
         # Long entry conditions
-        if is_uptrend and is_macd_bullish:
-            # Check if price is near support level (within 0.5% of s1 or s2)
-            if pivots['s1'] is not None and pivots['s2'] is not None:
-                near_s1 = abs(current_price - pivots['s1']) / current_price < 0.005
-                near_s2 = abs(current_price - pivots['s2']) / current_price < 0.005
+        if is_uptrend:
+            # Check if price is near support level (within 0.5% of pp)
+            if pivots['pp'] is not None:
+                near_pp = abs(current_price - pivots['pp']) / current_price < 0.005
                 
-                if near_s1 or near_s2:
+                if near_pp:
                     self.log.info(f"LONG signal detected at {current_price}")
                     self._enter_long(bar)
         
         # Short entry conditions
-        elif not is_uptrend and is_macd_bearish:
-            # Check if price is near resistance level (within 0.5% of r1 or r2)
-            if pivots['r1'] is not None and pivots['r2'] is not None:
-                near_r1 = abs(current_price - pivots['r1']) / current_price < 0.005
-                near_r2 = abs(current_price - pivots['r2']) / current_price < 0.005
+        elif not is_uptrend:
+            # Check if price is near resistance level (within 0.5% of pp)
+            if pivots['pp'] is not None:
+                near_pp = abs(current_price - pivots['pp']) / current_price < 0.005
                 
-                if near_r1 or near_r2:
+                if near_pp:
                     self.log.info(f"SHORT signal detected at {current_price}")
                     self._enter_short(bar)
     
@@ -327,12 +325,12 @@ class Strategy1(Strategy):
         exit_reason = ""
         
         # Stop loss: -2%
-        if pnl_pct <= -0.02:
+        if pnl_pct <= -0.01:
             should_exit = True
             exit_reason = "Stop Loss"
         
         # Take profit: +4% (2:1 risk/reward)
-        elif pnl_pct >= 0.04:
+        elif pnl_pct >= 0.02:
             should_exit = True
             exit_reason = "Take Profit"
         
