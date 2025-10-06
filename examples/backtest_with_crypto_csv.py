@@ -9,8 +9,18 @@ import sys
 import os
 import pandas as pd
 from decimal import Decimal
+from datetime import datetime
+import logging
+
+logger = logging.getLogger(__name__)
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+# 设置pandas显示选项 - 完整展示所有数据
+pd.set_option('display.max_rows', None)  # 显示所有行
+pd.set_option('display.max_columns', None)  # 显示所有列
+pd.set_option('display.width', None)  # 自动调整宽度
+pd.set_option('display.max_colwidth', None)  # 显示完整列内容
 
 from nautilus_trader.backtest.engine import BacktestEngine, BacktestEngineConfig
 from nautilus_trader.common.enums import LogLevel
@@ -30,6 +40,7 @@ from nautilus_trader.model.instruments import CryptoPerpetual
 from nautilus_trader.model.objects import Money, Price, Quantity
 
 from bot.bot1 import Strategy1, Strategy1Config
+from tools.html_report_generator import generate_html_report
 
 
 def load_csv_data(csv_file: str) -> pd.DataFrame:
@@ -108,6 +119,94 @@ def convert_to_nautilus_bars(
     print()
     
     return bars
+
+
+def save_reports_to_files(
+    account_report: str,
+    orders_report: pd.DataFrame,
+    positions_report: pd.DataFrame,
+    fills_report: pd.DataFrame,
+    symbol: str,
+    timeframe: str = '15m',
+    initial_balance: float = 10000.0,
+    final_balance: float = 10000.0,
+    output_dir: str = 'backtest_reports'
+) -> str:
+    """
+    将回测报告保存到文件
+    
+    Parameters
+    ----------
+    account_report : str
+        账户报告
+    orders_report : pd.DataFrame
+        订单报告
+    positions_report : pd.DataFrame
+        持仓报告
+    fills_report : pd.DataFrame
+        成交报告
+    symbol : str
+        交易对符号
+    timeframe : str
+        时间周期
+    initial_balance : float
+        初始资金
+    final_balance : float
+        最终资金
+    output_dir : str
+        输出目录
+        
+    Returns
+    -------
+    str
+        报告目录路径
+    """
+    # 创建报告目录
+    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+    report_dir = os.path.join(output_dir, f"{symbol}_{timestamp}")
+    os.makedirs(report_dir, exist_ok=True)
+    
+    # 保存账户报告
+    with open(os.path.join(report_dir, 'account_report.txt'), 'w', encoding='utf-8') as f:
+        f.write(account_report.to_string())
+    
+    # 保存订单报告
+    if orders_report is not None and not orders_report.empty:
+        # 保存为CSV和TXT
+        orders_report.to_csv(os.path.join(report_dir, 'orders_report.csv'), index=False)
+        with open(os.path.join(report_dir, 'orders_report.txt'), 'w', encoding='utf-8') as f:
+            f.write(orders_report.to_string())
+    
+    # 保存持仓报告
+    if positions_report is not None and not positions_report.empty:
+        positions_report.to_csv(os.path.join(report_dir, 'positions_report.csv'), index=False)
+        with open(os.path.join(report_dir, 'positions_report.txt'), 'w', encoding='utf-8') as f:
+            f.write(positions_report.to_string())
+    
+    # 保存成交报告
+    if fills_report is not None and not fills_report.empty:
+        fills_report.to_csv(os.path.join(report_dir, 'fills_report.csv'), index=False)
+        with open(os.path.join(report_dir, 'fills_report.txt'), 'w', encoding='utf-8') as f:
+            f.write(fills_report.to_string())
+    
+    # 生成并保存HTML报告
+    html_content = generate_html_report(
+        symbol=symbol,
+        timeframe=timeframe,
+        initial_balance=initial_balance,
+        final_balance=final_balance,
+        orders_report=orders_report,
+        positions_report=positions_report,
+        fills_report=fills_report,
+        timestamp=timestamp,
+        currency="USDT",
+    )
+    
+    html_file = os.path.join(report_dir, 'report.html')
+    with open(html_file, 'w', encoding='utf-8') as f:
+        f.write(html_content)
+    
+    return report_dir
 
 
 def create_crypto_instrument(
@@ -253,13 +352,13 @@ def run_backtest_with_csv(
     strategy_config = Strategy1Config(
         instrument_id=str(instrument.id),
         bar_type=str(bar_type),
-        ema_periods=[20, 50, 100, 200],
-        macd_fast_period=12,
-        macd_slow_period=26,
+        ema_periods=[200],
+        macd_fast_period=13,
+        macd_slow_period=34,
         macd_signal_period=9,
         risk_percent=0.01,
-        stop_loss_atr_multiplier=2.0,
-        take_profit_risk_reward=2.0,
+        stop_loss_atr_multiplier=1.5,
+        take_profit_risk_reward=3.0,
     )
     
     print(f"   EMA 周期：{strategy_config.ema_periods}")
@@ -297,26 +396,70 @@ def run_backtest_with_csv(
     
     orders_report = engine.trader.generate_orders_report()
     if orders_report is not None and not orders_report.empty:
-        print("\n📝 订单报告：")
-        print("-" * 80)
-        print(orders_report)
+        print("\n📝 订单报告（完整）：")
+        print("-" * 120)
+        # 使用 to_string() 完整显示所有行和列
+        print(orders_report.to_string())
+        print(f"\n订单总数：{len(orders_report)}")
     else:
         print("\n📝 未产生任何交易订单")
     
     positions_report = engine.trader.generate_positions_report()
     if positions_report is not None and not positions_report.empty:
-        print("\n📈 持仓报告：")
-        print("-" * 80)
-        print(positions_report)
+        print("\n📈 持仓报告（完整）：")
+        print("-" * 120)
+        print(positions_report.to_string())
+        print(f"\n持仓数量：{len(positions_report)}")
     else:
         print("\n📈 未开仓任何头寸")
     
     fills_report = engine.trader.generate_order_fills_report()
     if fills_report is not None and not fills_report.empty:
-        print("\n✅ 成交报告：")
-        print("-" * 80)
-        print(fills_report)
+        print("\n✅ 成交报告（完整）：")
+        print("-" * 120)
+        print(fills_report.to_string())
+        print(f"\n成交笔数：{len(fills_report)}")
     
+    # 保存报告到文件
+    try:
+        # 从account获取最终余额
+        final_balance = 10000.0  # 默认值
+        try:
+            # 尝试从cache获取账户
+            account = engine.cache.account_for_venue(venue)
+            if account:
+                final_balance = float(account.balance_total(USDT))
+        except Exception:
+            # 如果无法获取账户，使用默认值
+            pass
+        
+        report_dir = save_reports_to_files(
+            account_report=account_report,
+            orders_report=orders_report,
+            positions_report=positions_report,
+            fills_report=fills_report,
+            symbol=symbol,
+            timeframe=timeframe,
+            initial_balance=10000.0,
+            final_balance=final_balance,
+        )
+        print()
+        print("=" * 80)
+        print(f"💾 报告已保存到：{os.path.abspath(report_dir)}")
+        print("   - account_report.txt   (账户报告)")
+        print("   - orders_report.csv    (订单报告 CSV)")
+        print("   - orders_report.txt    (订单报告 TXT)")
+        print("   - positions_report.csv (持仓报告 CSV)")
+        print("   - positions_report.txt (持仓报告 TXT)")
+        print("   - fills_report.csv     (成交报告 CSV)")
+        print("   - fills_report.txt     (成交报告 TXT)")
+        print("   - report.html          (HTML 交互式报告) 🌐")
+        print()
+        print(f"🌐 在浏览器中打开查看：file://{os.path.abspath(os.path.join(report_dir, 'report.html'))}")
+    except Exception as e:
+        import traceback
+        logger.error(f"保存报告时出错：{e}")
+        logger.error(traceback.format_exc())
     print()
     print("=" * 80)
 

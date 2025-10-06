@@ -101,19 +101,6 @@ wheels = [
 ]
 
 [[package]]
-name = "cctx"
-version = "1.0.0"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "requests" },
-    { name = "setuptools" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/bd/d2/35ad05b2669c50fc2756e35d0fe462bbd085a5b7afb571f443fd2ceb151e/cctx-1.0.0.tar.gz", hash = "sha256:1d9ceb0603ed51a4f337cb8d53dd320339fd10814642d074b41a86d00be0bdbd", size = 5215 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/9f/fc/c476067af75a18686596fdfb879e428b41e770c7abd0eb6117bd56bd89f4/cctx-1.0.0-py2.py3-none-any.whl", hash = "sha256:e1fd64afe85baefdcd3a9f07ec1a74564974690393824f18f996f02afff287a3", size = 5672 },
-]
-
-[[package]]
 name = "ccxt"
 version = "4.5.7"
 source = { registry = "https://pypi.org/simple" }
@@ -882,7 +869,6 @@ name = "strategy-nautilus-trader"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
-    { name = "cctx" },
     { name = "ccxt" },
     { name = "nautilus-trader" },
     { name = "pandas" },
@@ -891,7 +877,6 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "cctx", specifier = ">=1.0.0" },
     { name = "ccxt", specifier = ">=4.0.0" },
     { name = "nautilus-trader", specifier = ">=1.220.0" },
     { name = "pandas", specifier = ">=2.0.0" },

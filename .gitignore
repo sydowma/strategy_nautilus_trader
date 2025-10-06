@@ -12,3 +12,7 @@ data/
 *.md
 
 .DS_Store
+
+backtest_reports/
+
+.idea/

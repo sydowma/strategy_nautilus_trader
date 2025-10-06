@@ -216,14 +216,14 @@ class Strategy1(Strategy):
                     self._enter_long(bar)
         
         # Short entry conditions
-        elif not is_uptrend:
-            # Check if price is near resistance level (within 0.5% of pp)
-            if pivots['pp'] is not None:
-                near_pp = abs(current_price - pivots['pp']) / current_price < 0.005
+        # elif not is_uptrend:
+        #     # Check if price is near resistance level (within 0.5% of pp)
+        #     if pivots['pp'] is not None:
+        #         near_pp = abs(current_price - pivots['pp']) / current_price < 0.005
                 
-                if near_pp:
-                    self.log.info(f"SHORT signal detected at {current_price}")
-                    self._enter_short(bar)
+        #         if near_pp:
+        #             self.log.info(f"SHORT signal detected at {current_price}")
+        #             self._enter_short(bar)
     
     def _enter_long(self, bar: Bar) -> None:
         """
