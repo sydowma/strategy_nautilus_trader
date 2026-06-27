@@ -1,7 +1,7 @@
 [project]
 name = "strategy-nautilus-trader"
 version = "0.1.0"
-description = "Add your description here"
+description = "NautilusTrader strategy lab with EMA/MACD/Camarilla examples, crypto backtests, and report tooling"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
